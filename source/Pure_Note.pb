@@ -95,7 +95,7 @@ EndProcedure
 
 
 Procedure About()
-  Define.s URL = "vivid-pixel.github.io/Pure_Note"
+  Define.s URL = "vivid-pixel.github.io/pure-note"
   MessageRequester("About " + #Program_Title, 
                    "Coded in PureBasic | Visit " + URL, 
                    #PB_MessageRequester_Info)
@@ -122,9 +122,9 @@ Repeat
         SaveFile(text_area, #False)
       Case #Menu_Button_SaveAs
         SaveFile(text_area, #True)
-      Case #Menu_Button_About
+      Case #Menu_Button_About, #PB_Menu_About
         About()
-      Case #Menu_Button_Quit
+      Case #Menu_Button_Quit, #PB_Menu_Quit
         quit_program = #True
     EndSelect
   EndIf
@@ -134,11 +134,10 @@ Repeat
                WindowHeight(window_main))
   
 Until event = #PB_Event_CloseWindow Or quit_program
-; IDE Options = PureBasic 6.00 LTS (Linux - x64)
-; CursorPosition = 128
-; FirstLine = 100
+; IDE Options = PureBasic 6.00 LTS (MacOS X - x64)
+; CursorPosition = 126
+; FirstLine = 104
 ; Folding = -
 ; EnableXP
 ; DPIAware
-; CompileSourceDirectory
-; Compiler = PureBasic 6.00 LTS (Linux - x64)
+; Executable = pure_note-macosx.app
