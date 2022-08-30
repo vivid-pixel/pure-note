@@ -1,4 +1,4 @@
-﻿EnableExplicit
+EnableExplicit
 
 #Program_Title = "Pure Note"
 
@@ -16,6 +16,7 @@ Declare UpdateTitleBar(file_name.s)
 
 Define source_file
 Define.s source_file_path
+Define file_is_new = #True
 
 ; Characteristics of the main and only window, currently
 Define window_flags = #PB_Window_ScreenCentered | #PB_Window_MinimizeGadget | 
@@ -41,12 +42,14 @@ CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
   MenuItem(#Menu_Button_Save, "&Save" + Chr(9) + "Cmd+S")
   MenuItem(#Menu_Button_SaveAs, "&Save As" + Chr(9) + "Cmd+Shift+S")
   MenuItem(#PB_Menu_About, "&About" + Chr(9) + "Cmd+F1")
+  MenuBar()
   MenuItem(#PB_Menu_Quit, "&Quit" + Chr(9) + "Cmd-Q")
 CompilerElse
   MenuItem(#Menu_Button_Open, "&Open" + Chr(9) + "Ctrl+O")
   MenuItem(#Menu_Button_Save, "&Save" + Chr(9) + "Ctrl+S")
   MenuItem(#Menu_Button_SaveAs, "&Save As" + Chr(9) + "Ctrl+Shift+S")
   MenuItem(#Menu_Button_About, "&About" + Chr(9) + "Ctrl+F1")
+  MenuBar()
   MenuItem(#Menu_Button_Quit, "&Quit" + Chr(9) + "Ctrl+Q")
 CompilerEndIf
 
@@ -55,10 +58,11 @@ Procedure LoadFile(text_area)
   Shared window_main
   Shared source_file_path.s
   Shared source_file
+  Shared file_is_new
   
   source_file_path.s = OpenFileRequester("Load Note", "", #File_Types, 0)
   
-  ; Prompt for the text file so we can read it into the program  
+  ; Prompt for the text file so we can read it into the program
   source_file = OpenFile(#PB_Any, source_file_path.s)
   
   If IsFile(source_file)
@@ -69,27 +73,31 @@ Procedure LoadFile(text_area)
     SetGadgetText(text_area, loaded_text)
     
     UpdateTitleBar(GetFilePart(source_file_path.s))
-  Else
-    MessageRequester("Load File", "Failed to load the file.", #PB_MessageRequester_Error)
+    
+    file_is_new = #False
   EndIf
 EndProcedure
 
 
 Procedure SaveFile(text_area, save_as)
   Shared source_file_path.s
+  Shared file_is_new
   
-  If save_as
+  ; We won't open the file picker if user didn't select Save As
+  If save_as Or file_is_new
     source_file_path.s = SaveFileRequester("Save As", "untitled.txt", #File_Types, 0)
   EndIf
   
   Define file_to_save = CreateFile(#PB_Any, source_file_path.s, #PB_UTF8)
   
   If IsFile(file_to_save)
-    WriteString(file_to_save, GetGadgetText(text_area), #PB_UTF8)
-    MessageRequester("Save File", "Save successful.")
-    UpdateTitleBar(GetFilePart(source_file_path.s))
-  Else
-    MessageRequester("Save File", "File failed to save. Permission issue?", #PB_MessageRequester_Error)
+    If WriteString(file_to_save, GetGadgetText(text_area), #PB_UTF8)
+      MessageRequester("Save File", "Save successful.")
+      UpdateTitleBar(GetFilePart(source_file_path.s))
+    ; For some reason the file did not save, so let the user know
+    Else
+      MessageRequester("Save File", "File failed to save. Permission issue?", #PB_MessageRequester_Error)
+    EndIf
   EndIf
 EndProcedure
 
@@ -116,15 +124,23 @@ Repeat
   
   If event = #PB_Event_Menu
     Select EventMenu()
+        ; Account for different options on OS X
+        CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+        Case #PB_Menu_About
+          About()
+        Case #PB_Menu_Quit
+          quit_program = #True
+        CompilerEndIf
+        
       Case #Menu_Button_Open
         LoadFile(text_area)
       Case #Menu_Button_Save
         SaveFile(text_area, #False)
       Case #Menu_Button_SaveAs
         SaveFile(text_area, #True)
-      Case #Menu_Button_About, #PB_Menu_About
+      Case #Menu_Button_About
         About()
-      Case #Menu_Button_Quit, #PB_Menu_Quit
+      Case #Menu_Button_Quit
         quit_program = #True
     EndSelect
   EndIf
@@ -134,10 +150,11 @@ Repeat
                WindowHeight(window_main))
   
 Until event = #PB_Event_CloseWindow Or quit_program
-; IDE Options = PureBasic 6.00 LTS (MacOS X - x64)
-; CursorPosition = 126
-; FirstLine = 104
-; Folding = -
+; IDE Options = PureBasic 6.00 LTS (Linux - x64)
+; CursorPosition = 99
+; FirstLine = 73
+; Folding = --
 ; EnableXP
 ; DPIAware
-; Executable = pure_note-macosx.app
+; Executable = binaries/pure_note-linux64
+; CompileSourceDirectory
